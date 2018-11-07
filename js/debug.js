@@ -4,8 +4,6 @@ var D2R = (Math.PI / 180);
 var R2D = (180 / Math.PI);
 var boxGeom = new THREE.BoxGeometry( 0.25, 0.25, 0.25 );
 
-var nieparzyste = true;
-
 function spawnCube(config) {
     var boxMat = [];
     var whiteMat = new THREE.MeshBasicMaterial();

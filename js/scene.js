@@ -1,24 +1,24 @@
 Number.prototype.clamp = function(min, max) { return Math.min(max, Math.max(min, this)); };
 Array.prototype.inverse = function() {
-    var result = [];
-    for (var i = this.length-1; i>=0; i--)
+    let result = [];
+    for (let i = this.length-1; i>=0; i--)
         result.push(this[i]);
     return result;
 };
 
 function updateRowColInputs(selected) {
-    var index = selected.value;
+    let index = selected.value;
     console.log(index);
 }
 
 function createSkybox(path) {
-    var texLoader = new THREE.TextureLoader();
-	var skyboxPath = "images/skybox/"+ path +"/";
-	var directions  = ["px", "nx", "py", "ny", "pz", "nz"];
-	var skyGeometry = new THREE.CubeGeometry( 5000, 5000, 5000 );
+    let texLoader = new THREE.TextureLoader();
+	let skyboxPath = "images/skybox/"+ path +"/";
+	let directions  = ["px", "nx", "py", "ny", "pz", "nz"];
+	let skyGeometry = new THREE.CubeGeometry( 5000, 5000, 5000 );
 	
-	var skyMaterial = [];
-	for (var i = 0; i < 6; i++)
+	let skyMaterial = [];
+	for (let i = 0; i < 6; i++)
         skyMaterial.push( new THREE.MeshBasicMaterial({
 			map: texLoader.load( skyboxPath + directions[i] + ".jpg" ),
 			side: THREE.BackSide
@@ -26,11 +26,11 @@ function createSkybox(path) {
 	return new THREE.Mesh( skyGeometry, skyMaterial );
 }
 
-var viewport3d, renderer3d;
-var viewport_width, viewport_height, controls;
-var loader_FBX, loader_TEX;
-var scene, camera, HUD;
-var map, model;
+let viewport3d, renderer3d;
+let viewport_width, viewport_height, controls;
+let loader_FBX, loader_TEX;
+let scene, camera, HUD, mouse;
+let map, model;
 
 function updateRendererSize(e) {
     viewport_width = viewport3d.offsetWidth;
@@ -40,22 +40,15 @@ function updateRendererSize(e) {
         camera.aspect = viewport_width / viewport_height;
         camera.updateProjectionMatrix();
     }
-    if (HUD)
-        HUD.setCameraAspect(viewport_width / viewport_height);
+    HUD && HUD.setCameraAspect(viewport_width / viewport_height);
 }
 
 function update() {
     requestAnimationFrame(update);
     controls.update();
-    if (HUD) {
-        renderer3d.clear();
-        renderer3d.render(scene, camera);
-        renderer3d.clearDepth();
-        HUD.render(renderer3d);
-    } else {
-        renderer3d.clear();
-        renderer3d.render(scene, camera);
-    }
+    renderer3d.clear();
+    renderer3d.render(scene, camera);
+    HUD && HUD.render(renderer3d);
 };
 
 function init() {
@@ -67,26 +60,41 @@ function init() {
     viewport3d.appendChild(renderer3d.domElement);
     updateRendererSize();
 
-    // Instantiate scene
+    // INITIALIZE SCENE
     loader_FBX = new THREE.FBXLoader();
     loader_TEX = new THREE.TextureLoader();
     scene = new THREE.Scene();
-
-    // make skybox
+    // create skybox
 	scene.add( createSkybox( SKYBOX ) );
-
     // setup scene lights
-    var light = new THREE.PointLight(0xffffff, 1, 0);
+    let light = new THREE.PointLight(0xffffff, 1, 0);
     light.position.set(0, 70, 0);
     scene.add(light);
-    var light = new THREE.AmbientLight( 0x5f5f5f );
+    light = new THREE.AmbientLight( 0x5f5f5f );
     scene.add(light);
-
-    // initialize camera and controls
+    // initialize camera
     camera = new THREE.PerspectiveCamera(60, viewport_width / viewport_height, 0.1, 10000);
-    controls = new CameraControls(camera, renderer3d.domElement);
-    HUD = new THREE.HUD();
 
+    // INITIALIZE HUD AND CONTROLS
+    mouse = new THREE.Mouse();
+    // initializing hud before controls makes it receiving events first
+    HUD = new THREE.HUD({
+        mousedown: [renderer3d.domElement, e => {
+            controls.canLock = false;
+            mouse.update(e); // manually update mouse state
+            let HUD_elem = HUD.testIntersects(mouse.X, mouse.Y);
+            controls.canLock = HUD_elem === false;
+            if (HUD_elem.callback)
+                HUD_elem.callback();
+        }],
+        mouseup: [renderer3d.domElement, e => controls.canLock = true],
+        mousemove: [renderer3d.domElement, e => {
+            // console.log(mouse);
+        }]
+    });
+    controls = new THREE.CameraControls(camera, renderer3d.domElement);
+
+    // INITIALIZE MODEL AND RUN MAIN LOOP
     model = loadModel(MODEL_NAME);
     update();
 }

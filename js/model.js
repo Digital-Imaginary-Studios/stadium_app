@@ -156,6 +156,8 @@ function loadModel(path) {
                 }
             }
         }
+
+        HUD.initSectorsMiniMap(model.config.seats);
     });
     return model;
 }
