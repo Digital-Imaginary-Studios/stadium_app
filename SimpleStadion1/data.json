@@ -37,6 +37,23 @@
         "Barierka_bok":		   "5",
         "tribune_chairs_top":  "2"
     },
+    "test": [
+        "D-1",
+        "C-4",
+        "C-3",
+        "C-2",
+        "C-1",
+        "B-2",
+        "B-1",
+        "A-8",
+        "A-7",
+        "A-6",
+        "A-5",
+        "A-4",
+        "A-3",
+        "A-2",
+        "A-1"
+    ],
     "camera_offset": [0, 0.4, 0],
     "seats": {
         "default": "startup",

@@ -14,26 +14,26 @@ function loadModel(path) {
         var loadMaterials = (textures, materials) => {
             var result = {};
             for (var id in materials) {
-                var values = {
+                var config = {
                     side: THREE.DoubleSide,
                     color: 0xffffff
                 };
                 value = materials[id];
                 switch (value.substr(0,1)) {
                     case '#':
-                        values.color = parseInt(value.substr(1,6), 16);
+                        config.color = parseInt(value.substr(1,6), 16);
                         break;
                     case '!':
-                        values.color = values.emissive = parseInt(value.substr(1,6), 16);
+                        config.color = config.emissive = parseInt(value.substr(1,6), 16);
                         break;
                     default:
-                        values.map = textures[value];
-                        values.transparent = true;
-                        values.opacity = 1.0;
-                        values.alphaTest = 0.5;
+                        config.map = textures[value];
+                        config.transparent = true;
+                        config.opacity = 1.0;
+                        config.alphaTest = 0.5;
                         break;
                 }
-                result[id] = values;
+                result[id] = new THREE.MeshPhongMaterial(config);
             }
             return result;
         };
@@ -53,61 +53,107 @@ function loadModel(path) {
     if (path[path.length-1] != '/')
         path += '/';
 
-    var setupMaterial = (material, config) => {
+    var applyMaterials = (material, config) => {
         if (Array.isArray(material))
-            material.forEach( child => setupMaterial(child, config) );
+            material.forEach( child => applyMaterials(child, config) );
         else
             if (config.hasOwnProperty(material.name))
-                material.setValues( config[material.name] );
+                material = config[material.name];
     };
     
     // initialize
-    var model = {};
-    model.calculateSeatPosition = (sector,row,col,lookAt0) => {
-		var O3D = new THREE.Object3D();
-		lookAt0 = lookAt0 || false;
-		// get config, calculate row & col
-		var config = (typeof(sector) == "object") ? sector : model.config.seats[sector];
-		row = row || 0;
-		col = col - 1 || 0;
-		if (config.hasOwnProperty("rows")) {
-			for (var i = 0; i < config.max; i++) {
-				if (row <= config.rows[i].max.rows) {
-					config = config.rows[i];
-					break;
-				}
-				row = row - config.rows[i].max.rows;
-			}
-		}
-		row -= 1;
-		// set base position
-		if (config.hasOwnProperty("position") || config.hasOwnProperty("origin"))
-			O3D.position.set(...(config.position || config.origin));
-		// set base rotation
-		O3D.rotation.order = "YXZ";
-		O3D.rotation.set(0,0,0);
-		if (config.hasOwnProperty("rotation"))
-            O3D.rotation.set(...config.rotation.inverse(), 0);
-		// offset if need be
-		if (model.config.hasOwnProperty("camera_offset"))
-			O3D.translateOnAxis(new THREE.Vector3(...model.config.camera_offset), 1);
-		if (config.hasOwnProperty("max") && config.hasOwnProperty("offset")) {
-			col = col.clamp(0, config.max.cols-1);
-			row = row.clamp(0, config.max.rows-1);
-			O3D.translateX(config.offset[0] * col);
-			O3D.translateY(config.offset[1] * row);
-			O3D.translateZ(config.offset[2] * row);
-		}
-		// look at origin
-		if (lookAt0) {
-			O3D.lookAt(0,0,0);
-			O3D.rotateY(Math.PI);
-		}
-		return {
-			position: O3D.position.toArray(),
-			rotation: O3D.rotation.toArray().slice(0,3)
-		}
+    var model = {
+        config: {},
+        calculateSeatPosition: (sector,row,col,lookAt0) => {
+            var O3D = new THREE.Object3D();
+            lookAt0 = lookAt0 || false;
+            // get config, calculate row & col
+            var config = (typeof(sector) == "object") ? sector : model.config.seats[sector];
+            row = row || 0;
+            col = col - 1 || 0;
+            if (config.hasOwnProperty("rows")) {
+                for (var i = 0; i < config.max; i++) {
+                    if (row <= config.rows[i].max.rows) {
+                        config = config.rows[i];
+                        break;
+                    }
+                    row = row - config.rows[i].max.rows;
+                }
+            }
+            row -= 1;
+            // set base position
+            if (config.hasOwnProperty("position") || config.hasOwnProperty("origin"))
+                O3D.position.set(...(config.position || config.origin));
+            // set base rotation
+            O3D.rotation.order = "YXZ";
+            O3D.rotation.set(0,0,0);
+            if (config.hasOwnProperty("rotation"))
+                O3D.rotation.set(...config.rotation.inverse(), 0);
+            // offset if need be
+            if (model.config.hasOwnProperty("camera_offset"))
+                O3D.translateOnAxis(new THREE.Vector3(...model.config.camera_offset), 1);
+            if (config.hasOwnProperty("max") && config.hasOwnProperty("offset")) {
+                col = col.clamp(0, config.max.cols-1);
+                row = row.clamp(0, config.max.rows-1);
+                O3D.translateX(config.offset[0] * col);
+                O3D.translateY(config.offset[1] * row);
+                O3D.translateZ(config.offset[2] * row);
+            }
+            // look at origin
+            if (lookAt0) {
+                O3D.lookAt(0,0,0);
+                O3D.rotateY(Math.PI);
+            }
+            return {
+                position: O3D.position.toArray(),
+                rotation: O3D.rotation.toArray().slice(0,3)
+            }
+        },
+
+        initSectorsMiniMap: (obj) => {
+            function makeTextSprite( message, parameters ){
+                if ( parameters === undefined ) parameters = {};
+                var fontface = parameters.hasOwnProperty("fontface") ? 
+                    parameters["fontface"] : "Arial";
+                var fontsize = parameters.hasOwnProperty("fontsize") ? 
+                    parameters["fontsize"] : 40;
+                var borderThickness = parameters.hasOwnProperty("borderThickness") ? 
+                    parameters["borderThickness"] : 5;
+        
+                var canvas = document.createElement('canvas');
+                var context = canvas.getContext('2d');
+                context.font = "Bold " + fontsize + "px " + fontface;
+
+                // canvas.width = context.measureText( message ).width;
+                // canvas.height = fontsize * 1.5;
+        
+                // text color
+                context.fillStyle = "rgba(255, 0, 0, 1.0)";
+                context.fillText( message, borderThickness, fontsize + borderThickness);
+        
+                // canvas contents will be used for a texture
+                var texture = new THREE.Texture(canvas) 
+                texture.needsUpdate = true;
+                return texture;
+            }
+
+            for (let i = obj.children.length - 1; i >= 0; i--)
+                obj.remove(obj.children[i]);
+            for (let index in model.config.seats) {
+                if (index == "default") continue;
+                let tex = makeTextSprite(index);
+                let sector = new THREE.Sprite(new THREE.SpriteMaterial({map: tex}));
+                sector.scale.set(tex.image.width, tex.image.height, 1);
+                sector.position.set(...(model.config.seats[index].origin || model.config.seats[index].position));//.map(x => x * 5), 1);
+                sector.callback = () => {
+                    console.log("clicked!", index);
+                    controls.changeView(index, 0, 0);
+                };
+                obj.add(sector);
+            }
+        }
     };
+
 
     // Load config
     model.config = parseConfig(path);
@@ -117,10 +163,15 @@ function loadModel(path) {
             if (child.isMesh) {
                 child.castShadow = true;
                 child.receiveShadow = true;
-                setupMaterial(child.material, model.config.materials);
+                applyMaterials(child.material, model.config.materials);
             }
         });
         model.object = object;
+        for (let index = 0; index < model.object.children[0].material.length; index++) {
+            let material = model.object.children[0].material[index];
+            if (model.config.materials.hasOwnProperty(material.name))
+                model.object.children[0].material[index] = model.config.materials[material.name];
+        }
         model.object.castShadow = true;
         model.object.receiveShadow = true;
         scene.add(model.object);
@@ -157,7 +208,7 @@ function loadModel(path) {
             }
         }
 
-        HUD.initSectorsMiniMap(model.config.seats);
+        model.initSectorsMiniMap(bSectors);
     });
     return model;
 }

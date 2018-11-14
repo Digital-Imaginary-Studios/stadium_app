@@ -1,6 +1,6 @@
 THREE.CameraControls = function(camera, domElement) {
-	domElement.requestPointerLock = domElement.requestPointerLock || domElement.mozRequestPointerLock;
-	document.exitPointerLock = document.exitPointerLock || document.mozExitPointerLock;
+	domElement.requestPointerLock = domElement.requestPointerLock || domElement.mozRequestPointerLock || domElement.webkitRequestPointerLock;
+	document.exitPointerLock = document.exitPointerLock || document.mozExitPointerLock || document.webkitExitPointerLock;
 
 	// RECEIVING EVENTS FROM BROWSER
 	var onPointerLockChange = e => this.isLocked = (document.pointerLockElement === domElement);
@@ -109,6 +109,7 @@ THREE.CameraControls = function(camera, domElement) {
 		camera.rotation.set(...config.rotation);
 	};
 
+	var lastPos;
 	this.canLock = true;
 	this.isLocked = false;
 	this.button = -1;
