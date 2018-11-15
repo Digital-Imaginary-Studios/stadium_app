@@ -16,7 +16,8 @@ function loadModel(path) {
             for (var id in materials) {
                 var config = {
                     side: THREE.DoubleSide,
-                    color: 0xffffff
+                    color: 0xffffff,
+                    name: id
                 };
                 value = materials[id];
                 switch (value.substr(0,1)) {
@@ -143,11 +144,12 @@ function loadModel(path) {
                 if (index == "default") continue;
                 let tex = makeTextSprite(index);
                 let sector = new THREE.Sprite(new THREE.SpriteMaterial({map: tex}));
-                sector.scale.set(tex.image.width, tex.image.height, 1);
+                sector.scale.set(tex.image.width, tex.image.height, 100);
+                console.log(index);
                 sector.position.set(...(model.config.seats[index].origin || model.config.seats[index].position));//.map(x => x * 5), 1);
                 sector.callback = () => {
                     console.log("clicked!", index);
-                    controls.changeView(index, 0, 0);
+                    controls.changeView(index, 1, 1);
                 };
                 obj.add(sector);
             }
@@ -186,27 +188,27 @@ function loadModel(path) {
             }
         }
 
-        if (model.config.hasOwnProperty("test")) {
-            var spawnCubes = (sector, seat, actualRow) => {
-                actualRow = actualRow || 0;
-                for (var row = 0; row <= seat.max.rows; row++)
-                    for (var col = 0; col <= seat.max.cols; col++)
-                        spawnCube( model.calculateSeatPosition(sector, actualRow + row, col, false) );
-            }
-            for (index in model.config.test) {
-                index = model.config.test[index];
-                var seat = model.config.seats[index];
-                if (seat.hasOwnProperty("rows")) {
-                    var actualRow = 0;
-                    for (var i = 0; i < seat.max; i++) {
-                        spawnCubes(index, seat.rows[i], actualRow);
-                        actualRow += seat.rows[i].max.rows;
-                    }
-                } else {
-                    spawnCubes(index, seat);
-                }
-            }
-        }
+        // if (model.config.hasOwnProperty("test")) {
+        //     var spawnCubes = (sector, seat, actualRow) => {
+        //         actualRow = actualRow || 0;
+        //         for (var row = 0; row <= seat.max.rows; row++)
+        //             for (var col = 0; col <= seat.max.cols; col++)
+        //                 spawnCube( model.calculateSeatPosition(sector, actualRow + row, col, false) );
+        //     }
+        //     for (index in model.config.test) {
+        //         index = model.config.test[index];
+        //         var seat = model.config.seats[index];
+        //         if (seat.hasOwnProperty("rows")) {
+        //             var actualRow = 0;
+        //             for (var i = 0; i < seat.max; i++) {
+        //                 spawnCubes(index, seat.rows[i], actualRow);
+        //                 actualRow += seat.rows[i].max.rows;
+        //             }
+        //         } else {
+        //             spawnCubes(index, seat);
+        //         }
+        //     }
+        // }
 
         model.initSectorsMiniMap(bSectors);
     });

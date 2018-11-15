@@ -5,10 +5,11 @@
         "3": "maps/T_Football_gate_grid.png",
         "4": "maps/T_stadium_reserve_chairs.png",
         "5": "maps/Barierka_bok.png",
-        "6": "maps/Barierka_srodek.png"
+        "6": "maps/Barierka_srodek.png",
+	    "7": "maps/soccer_court_v02.jpg"
     },
     "materials": {
-        "playing_field":       "1",
+        "playing_field":       "7",
         "reserve_bench-roof":  "#385602",
         "reserve_chairs":      "4",
         "tribune-floor":       "1",
