@@ -6,7 +6,96 @@
         "4": "maps/T_stadium_reserve_chairs.png",
         "5": "maps/Barierka_bok.png",
         "6": "maps/Barierka_srodek.png",
-	    "7": "maps/soccer_court_v02.jpg"
+	    "7": "maps/soccer_court_v03.jpg"
+    },
+    "materials_test": {
+        "playing_field": {
+            "reflectivity": 0.1,
+            "map": "7"
+        },
+        "reserve_bench-roof":  {
+            "color": "385602",
+            "reflectivity": 0.85
+        },
+        "reserve_chairs": {
+            "reflectivity": 0.1,
+            "map": "4"
+        },
+        "tribune-floor": {
+            "map": "1"
+        },
+        "tribune-floor-grass": {
+            "map": "1"
+        },
+        "Football gate_grid":  {
+            "map": "3"
+        },
+        "bannerREKLAMA": {
+            "map": "1",
+            "reflectivity": 1
+        },
+        "fence_playfield": {
+            "color": "e7e7e7"
+        },
+        "tribune_base": {
+            "color": "595656"
+        },
+        "tribune_stairs": {
+            "color": "85602d"
+        },
+        "doors_corner": {
+            "map": "1"
+        },
+        "corner_concret": {
+            "map": "1"
+        },
+        "tribune_fence": {
+            "color": "a2a0a0"
+        },
+        "soccers_entry_roof": {
+            "color": "4e5489"
+        },
+        "solid_concreet": {
+            "color": "646464"
+        },
+        "tribune_side_entry": {
+            "map": "1"
+        },
+        "tribune_side_entry_door": {
+            "map": "1"
+        },
+        "halogen_cover": {
+            "color": "5e5e5e"
+        },
+        "halogen_light": {
+            "color": "e7e7e7"
+        },
+        "halogen_bulb": {
+            "emissive": "ffffff"
+        },
+        "roof_top": {
+            "color": "afa162"
+        },
+        "concreat_walls up": {
+            "color": "000000"
+        },
+        "roof_metal_crate": {
+            "color": "989292"
+        },
+        "Barierka_srodek": {
+            "map": "6"
+        },
+        "Barierka_bok": {
+            "map": "5"
+        },
+        "tribune_chairs": {
+            "map": "2",
+            "reflectivity": 0.7
+        },
+        "tribune_chairs_top": {
+            "map": "2",
+            "reflectivity": 0.7
+        }
     },
     "materials": {
         "playing_field":       "7",

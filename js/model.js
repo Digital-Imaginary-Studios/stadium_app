@@ -11,12 +11,57 @@ function loadModel(path) {
             }
             return result;
         };
+        //*
+        var loadMaterials = (textures, configs) => {
+            var result = {};
+            var material = {};
+            for (var id in configs) {
+                material = {
+                    side: THREE.DoubleSide,
+                    color: 0xffffff,
+                    envMap: scene.background,
+                    reflectivity: 0.2,
+                    name: id
+                };
+                let config = configs[id];
+                for (var option in config) {
+                    let value = config[option];
+                    switch (option) {
+                        case 'map':
+                            if (textures.hasOwnProperty(value)) {
+                                material.map = textures[value];
+                                material.transparent = true;
+                                material.opacity = 1.0;
+                                material.alphaTest = 0.5;
+                                console.log(id, "texture set");
+                            }
+                            break;
+
+                        case 'color':
+                            material.color = parseInt(value, 16);
+                            break;
+
+                        case 'emissive':
+                            material.emissive = parseInt(value, 16);
+                            break;
+                        
+                        default:
+                            material[option] = config[option];
+                            break;
+                    }
+                }
+                result[id] = new THREE.MeshPhongMaterial(material);
+            }
+            return result;
+        };
+        /*/
         var loadMaterials = (textures, materials) => {
             var result = {};
             for (var id in materials) {
                 var config = {
                     side: THREE.DoubleSide,
                     color: 0xffffff,
+                    envMap: scene.background,
                     name: id
                 };
                 value = materials[id];
@@ -38,11 +83,13 @@ function loadModel(path) {
             }
             return result;
         };
+        //*/
     
         var config = {};
         getJSON(path + "data.json", toParse => {
             config.textures = loadTextures(toParse.textures);
-            config.materials = loadMaterials(config.textures, toParse.materials);
+            config.materials = loadMaterials(config.textures, toParse.materials_test);
+            // config.materials = loadMaterials(config.textures, toParse.materials);
             if (toParse.hasOwnProperty("camera_offset"))
                 config.camera_offset = toParse.camera_offset;
             config.seats = toParse.seats;
@@ -160,15 +207,15 @@ function loadModel(path) {
     // Load config
     model.config = parseConfig(path);
     // Load model
-    loader_FBX.load(path +'data.fbx', object => {
-        object.traverse(child => {
+    loader_MESH.load(path +'data.fbx', obj => {
+        obj.traverse(child => {
             if (child.isMesh) {
                 child.castShadow = true;
                 child.receiveShadow = true;
                 applyMaterials(child.material, model.config.materials);
             }
         });
-        model.object = object;
+        model.object = obj;
         for (let index = 0; index < model.object.children[0].material.length; index++) {
             let material = model.object.children[0].material[index];
             if (model.config.materials.hasOwnProperty(material.name))
@@ -178,8 +225,12 @@ function loadModel(path) {
         model.object.receiveShadow = true;
         scene.add(model.object);
 
-        if (! controls.load())
-            controls.changeView(model.config.seats.default);
+        if (controls) {
+            fitCameraToObject(controls.camera, model.object);
+            if (! controls.load())
+                controls.changeView(model.config.seats.default);
+        }
+
 
         if (addSeatToCombobox) {
             for(index in model.config.seats) {

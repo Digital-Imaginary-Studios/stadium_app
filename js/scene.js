@@ -11,27 +11,46 @@ function updateRowColInputs(selected) {
     console.log(index);
 }
 
-function createSkybox(path) {
-    var texLoader = new THREE.TextureLoader();
-	var skyboxPath = "images/skybox/"+ path +"/";
-	var directions  = ["px", "nx", "py", "ny", "pz", "nz"];
-	var skyGeometry = new THREE.CubeGeometry( 5000, 5000, 5000 );
+function fitCameraToObject( camera, object, offset ) {
+    offset = offset || 1.25;
 
-	var skyMaterial = [];
-	for (let i = 0; i < 6; i++)
-        skyMaterial.push( new THREE.MeshBasicMaterial({
-			map: texLoader.load( skyboxPath + directions[i] + ".jpg" ),
-			side: THREE.BackSide
-		}));
-	return new THREE.Mesh( skyGeometry, skyMaterial );
+    const boundingBox = new THREE.Box3();
+    boundingBox.setFromObject(object);
+    const center = boundingBox.getCenter();
+    const size = boundingBox.getSize();
+
+    const maxDim = Math.max(size.x, size.y, size.z);
+    const fov = camera.fov * (Math.PI / 180);
+    cameraZ = Math.abs(maxDim / 2 * Math.tan( fov * 2 ));
+    cameraZ *= offset;
+    scene.updateMatrixWorld();
+    var objectWorldPosition = new THREE.Vector3();
+    objectWorldPosition.setFromMatrixPosition(object.matrixWorld);
+
+    const directionVector = camera.position.sub(objectWorldPosition);
+    const unitDirectionVector = directionVector.normalize();
+    camera.position = unitDirectionVector.multiplyScalar(cameraZ);
+    camera.lookAt(objectWorldPosition);
+
+    const minZ = boundingBox.min.z;
+    const cameraToFarEdge = (minZ < 0) ? -minZ + cameraZ : cameraZ - minZ;
+    
+    camera.far = cameraToFarEdge * 3;
+    camera.updateProjectionMatrix();
+    camera.lookAt(center);
+}
+
+function loadSkybox(path) {
+    scene.background = new THREE.CubeTextureLoader().setPath("images/skybox/"+ path +"/").load(["px.jpg", "nx.jpg", "py.jpg", "ny.jpg", "pz.jpg", "nz.jpg"]);
+    scene.background.format = THREE.RGBFormat;
 }
 
 var viewport3d, renderer3d;
 var viewport_width, viewport_height, controls;
-var loader_FBX, loader_TEX;
+var loader_MESH, loader_TEX;
 var scene, camera, cameraTop, HUD, mouse;
 var map, model;
-var bSectors
+var bSectors;
 
 function updateRendererSize(e) {
     viewport_width = viewport3d.offsetWidth;
@@ -62,16 +81,16 @@ function init() {
     updateRendererSize();
 
     // INITIALIZE SCENE
-    loader_FBX = new THREE.FBXLoader();
+    loader_MESH = new THREE.FBXLoader();
     loader_TEX = new THREE.TextureLoader();
     scene = new THREE.Scene();
     // create skybox
-	scene.add( createSkybox( SKYBOX ) );
+	loadSkybox( SKYBOX );
     // setup scene lights
-    var light = new THREE.PointLight(0xffffff, 1, 0);
-    light.position.set(0, 70, 0);
-    scene.add(light);
-    light = new THREE.AmbientLight( 0x5f5f5f );
+    // var light = new THREE.PointLight(0xffffff, 1, 0);
+    // light.position.set(0, 70, 0);
+    // scene.add(light);
+    var light = new THREE.AmbientLight( 0xffffff );
     scene.add(light);
     // initialize camera
     camera = new THREE.PerspectiveCamera(60, viewport_width / viewport_height, 0.1, 10000);
