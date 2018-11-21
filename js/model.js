@@ -1,122 +1,16 @@
 function loadModel(path) {
-    var parseConfig = () => {
-        var loadTextures = textures => {
-            var result = {};
-            for (var id in textures) {
-                var tex = loader_TEX.load(path + textures[id]);
-                // tex.minFilter = THREE.LinearFilter;
-                tex.magFilter = THREE.NearestFilter;
-                tex.minFilter = THREE.LinearMipMapLinearFilter;
-                result[id] = tex;
-            }
-            return result;
-        };
-        //*
-        var loadMaterials = (textures, configs) => {
-            var result = {};
-            var material = {};
-            for (var id in configs) {
-                material = {
-                    side: THREE.DoubleSide,
-                    color: 0xffffff,
-                    envMap: scene.background,
-                    reflectivity: 0.2,
-                    name: id
-                };
-                let config = configs[id];
-                for (var option in config) {
-                    let value = config[option];
-                    switch (option) {
-                        case 'map':
-                            if (textures.hasOwnProperty(value)) {
-                                material.map = textures[value];
-                                material.transparent = true;
-                                material.opacity = 1.0;
-                                material.alphaTest = 0.5;
-                                console.log(id, "texture set");
-                            }
-                            break;
-
-                        case 'color':
-                            material.color = parseInt(value, 16);
-                            break;
-
-                        case 'emissive':
-                            material.emissive = parseInt(value, 16);
-                            break;
-                        
-                        default:
-                            material[option] = config[option];
-                            break;
-                    }
-                }
-                result[id] = new THREE.MeshPhongMaterial(material);
-            }
-            return result;
-        };
-        /*/
-        var loadMaterials = (textures, materials) => {
-            var result = {};
-            for (var id in materials) {
-                var config = {
-                    side: THREE.DoubleSide,
-                    color: 0xffffff,
-                    envMap: scene.background,
-                    name: id
-                };
-                value = materials[id];
-                switch (value.substr(0,1)) {
-                    case '#':
-                        config.color = parseInt(value.substr(1,6), 16);
-                        break;
-                    case '!':
-                        config.color = config.emissive = parseInt(value.substr(1,6), 16);
-                        break;
-                    default:
-                        config.map = textures[value];
-                        config.transparent = true;
-                        config.opacity = 1.0;
-                        config.alphaTest = 0.5;
-                        break;
-                }
-                result[id] = new THREE.MeshPhongMaterial(config);
-            }
-            return result;
-        };
-        //*/
-    
-        var config = {};
-        getJSON(path + "data.json", toParse => {
-            config.textures = loadTextures(toParse.textures);
-            config.materials = loadMaterials(config.textures, toParse.materials_test);
-            // config.materials = loadMaterials(config.textures, toParse.materials);
-            if (toParse.hasOwnProperty("camera_offset"))
-                config.camera_offset = toParse.camera_offset;
-            config.seats = toParse.seats;
-            config.test = toParse.test;
-        });
-        return config;
-    }
-
+    // Ensure path string ends with slash
     if (path[path.length-1] != '/')
         path += '/';
 
-    var applyMaterials = (material, config) => {
-        if (Array.isArray(material))
-            material.forEach( child => applyMaterials(child, config) );
-        else
-            if (config.hasOwnProperty(material.name))
-                material = config[material.name];
-    };
-    
     // initialize
-    var model = {
+    var result = {
         config: {},
         calculateSeatPosition: (sector,row,col,lookAt0) => {
             var O3D = new THREE.Object3D();
             lookAt0 = lookAt0 || false;
             // get config, calculate row & col
-            var config = (typeof(sector) == "object") ? sector : model.config.seats[sector];
+            var config = (typeof(sector) == "object") ? sector : result.config.seats[sector];
             row = row || 0;
             col = col - 1 || 0;
             if (config.hasOwnProperty("rows")) {
@@ -138,8 +32,8 @@ function loadModel(path) {
             if (config.hasOwnProperty("rotation"))
                 O3D.rotation.set(...config.rotation.inverse(), 0);
             // offset if need be
-            if (model.config.hasOwnProperty("camera_offset"))
-                O3D.translateOnAxis(new THREE.Vector3(...model.config.camera_offset), 1);
+            if (result.config.hasOwnProperty("camera_offset"))
+                O3D.translateOnAxis(new THREE.Vector3(...result.config.camera_offset), 1);
             if (config.hasOwnProperty("max") && config.hasOwnProperty("offset")) {
                 col = col.clamp(0, config.max.cols-1);
                 row = row.clamp(0, config.max.rows-1);
@@ -187,13 +81,15 @@ function loadModel(path) {
 
             for (let i = obj.children.length - 1; i >= 0; i--)
                 obj.remove(obj.children[i]);
-            for (let index in model.config.seats) {
+            for (let index in result.config.seats) {
                 if (index == "default") continue;
                 let tex = makeTextSprite(index);
                 let sector = new THREE.Sprite(new THREE.SpriteMaterial({map: tex}));
                 sector.scale.set(tex.image.width, tex.image.height, 100);
-                console.log(index);
-                sector.position.set(...(model.config.seats[index].origin || model.config.seats[index].position));//.map(x => x * 5), 1);
+                let seat = result.config.seats[index];
+                if (seat.hasOwnProperty("rows"))
+                    seat = seat.rows[0];
+                sector.position.set(...(seat.origin || seat.position));//.map(x => x * 5), 1);
                 sector.callback = () => {
                     console.log("clicked!", index);
                     controls.changeView(index, 1, 1);
@@ -205,50 +101,35 @@ function loadModel(path) {
 
 
     // Load config
-    model.config = parseConfig(path);
+    getJSON(path +'config.json', config => result.config = config);
     // Load model
-    loader_MESH.load(path +'data.fbx', obj => {
-        obj.traverse(child => {
-            if (child.isMesh) {
-                child.castShadow = true;
-                child.receiveShadow = true;
-                applyMaterials(child.material, model.config.materials);
-            }
-        });
-        model.object = obj;
-        for (let index = 0; index < model.object.children[0].material.length; index++) {
-            let material = model.object.children[0].material[index];
-            if (model.config.materials.hasOwnProperty(material.name))
-                model.object.children[0].material[index] = model.config.materials[material.name];
-        }
-        model.object.castShadow = true;
-        model.object.receiveShadow = true;
-        scene.add(model.object);
+    new THREE.ObjectLoader().load(path +'model.json', obj => {
+        result.object = obj;
+        scene.add(result.object);
 
         if (controls) {
-            fitCameraToObject(controls.camera, model.object);
+            fitCameraToObject(cameraTop, result.object);
             if (! controls.load())
-                controls.changeView(model.config.seats.default);
+                controls.changeView(result.config.seats.default);
         }
 
-
         if (addSeatToCombobox) {
-            for(index in model.config.seats) {
+            for(index in result.config.seats) {
                 if (index == "default") continue;
                 addSeatToCombobox(index);
             }
         }
 
-        // if (model.config.hasOwnProperty("test")) {
+        // if (result.config.hasOwnProperty("test")) {
         //     var spawnCubes = (sector, seat, actualRow) => {
         //         actualRow = actualRow || 0;
         //         for (var row = 0; row <= seat.max.rows; row++)
         //             for (var col = 0; col <= seat.max.cols; col++)
-        //                 spawnCube( model.calculateSeatPosition(sector, actualRow + row, col, false) );
+        //                 spawnCube( result.calculateSeatPosition(sector, actualRow + row, col, false) );
         //     }
-        //     for (index in model.config.test) {
-        //         index = model.config.test[index];
-        //         var seat = model.config.seats[index];
+        //     for (index in result.config.test) {
+        //         index = result.config.test[index];
+        //         var seat = result.config.seats[index];
         //         if (seat.hasOwnProperty("rows")) {
         //             var actualRow = 0;
         //             for (var i = 0; i < seat.max; i++) {
@@ -261,7 +142,7 @@ function loadModel(path) {
         //     }
         // }
 
-        model.initSectorsMiniMap(bSectors);
+        result.initSectorsMiniMap(HUD.SectorsOverlay);
     });
-    return model;
+    return result;
 }

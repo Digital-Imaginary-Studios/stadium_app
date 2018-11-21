@@ -1,6 +1,8 @@
 THREE.HUD = function(config) {
     this.render = renderer => {
         renderer.clearDepth();
+        renderer.render(this.SectorsOverlay, this.camera);
+        renderer.clearDepth();
         renderer.render(this.scene, this.camera);
     };
 
@@ -66,6 +68,8 @@ THREE.HUD = function(config) {
     this.sprites = [];
     this.raycaster = new THREE.Raycaster();
     this.scene = new THREE.Scene();
+    this.SectorsOverlay = new THREE.Scene();
+    this.SectorsOverlay.visible = false;
     this.camera = new THREE.OrthographicCamera(-viewport_width/2, viewport_width/2, viewport_height/2, -viewport_height/2, 1, 10);
     this.camera.position.z = 10;
 };

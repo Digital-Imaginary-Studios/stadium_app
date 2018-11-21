@@ -6,7 +6,12 @@ THREE.CameraControls = function(camera, domElement) {
 	var onPointerLockChange = e => this.isLocked = (document.pointerLockElement === domElement);
 	this.eventListeners = {
 		// MOUSE CONTROLS
-		mousewheel: [domElement, e => camera.translateZ(e.deltaY * this.zoomSpeed)],
+		mousewheel: [domElement, e => {
+			if (this.canLock)
+				camera.translateZ(e.deltaY * this.zoomSpeed)
+			else
+				cameraTop.translateZ(e.deltaY * this.zoomSpeed)
+		}],
 		mousedown: [domElement, e => {
 			this.button = e.button;
 			if (! this.canLock) return;

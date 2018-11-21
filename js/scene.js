@@ -13,14 +13,15 @@ function updateRowColInputs(selected) {
 
 function fitCameraToObject( camera, object, offset ) {
     offset = offset || 1.25;
-
     const boundingBox = new THREE.Box3();
     boundingBox.setFromObject(object);
-    const center = boundingBox.getCenter();
-    const size = boundingBox.getSize();
-
+    const center = new THREE.Vector3();
+    const size = new THREE.Vector3();
+    boundingBox.getCenter(center);
+    boundingBox.getSize(size);
+    
     const maxDim = Math.max(size.x, size.y, size.z);
-    const fov = camera.fov * (Math.PI / 180);
+    const fov = 50 * (Math.PI / 180);
     cameraZ = Math.abs(maxDim / 2 * Math.tan( fov * 2 ));
     cameraZ *= offset;
     scene.updateMatrixWorld();
@@ -38,6 +39,8 @@ function fitCameraToObject( camera, object, offset ) {
     camera.far = cameraToFarEdge * 3;
     camera.updateProjectionMatrix();
     camera.lookAt(center);
+    camera.rotation.y = 0;
+    camera.rotation.z = 0;
 }
 
 function loadSkybox(path) {
@@ -47,10 +50,9 @@ function loadSkybox(path) {
 
 var viewport3d, renderer3d;
 var viewport_width, viewport_height, controls;
-var loader_MESH, loader_TEX;
 var scene, camera, cameraTop, HUD, mouse;
+var loader_TEX;
 var map, model;
-var bSectors;
 
 function updateRendererSize(e) {
     viewport_width = viewport3d.offsetWidth;
@@ -67,7 +69,7 @@ function update() {
     requestAnimationFrame(update);
     controls.update();
     renderer3d.clear();
-    renderer3d.render(scene, bSectors.visible ? cameraTop : camera);
+    renderer3d.render(scene, HUD.SectorsOverlay.visible ? cameraTop : camera);
     HUD && HUD.render(renderer3d);
 };
 
@@ -81,9 +83,9 @@ function init() {
     updateRendererSize();
 
     // INITIALIZE SCENE
-    loader_MESH = new THREE.FBXLoader();
     loader_TEX = new THREE.TextureLoader();
     scene = new THREE.Scene();
+
     // create skybox
 	loadSkybox( SKYBOX );
     // setup scene lights
@@ -104,19 +106,16 @@ function init() {
     HUD = new THREE.HUD({
         mousedown: [renderer3d.domElement, e => {
             mouse.update(e); // manually update mouse state
-            controls.canLock = !(HUD.process(mouse.X, mouse.Y) || bSectors.visible);
+            controls.canLock = !(HUD.process(mouse.X, mouse.Y) || HUD.SectorsOverlay.visible);
         }],
-        // mouseup: [renderer3d.domElement, e => controls.canLock = true],
+        mouseup: [renderer3d.domElement, e => controls.canLock = !HUD.SectorsOverlay.visible],
         mousemove: [renderer3d.domElement, e => {
             // console.log(mouse);
         }]
     });
 
-    bSectors = new THREE.Group();
-    bSectors.visible = false;
-    HUD.addElem(bSectors);
     HUD.addButton("bChooseSector", "images/button.png", -viewport_width/2 + 10, viewport_height/2 - 10, 0.0, 1.0, (_this) => {
-        bSectors.visible = !bSectors.visible;
+        HUD.SectorsOverlay.visible = !HUD.SectorsOverlay.visible;
     });
     controls = new THREE.CameraControls(camera, renderer3d.domElement);
 
