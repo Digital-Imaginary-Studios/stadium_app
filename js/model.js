@@ -3,6 +3,68 @@ function loadModel(path) {
     if (path[path.length-1] != '/')
         path += '/';
 
+    var parseConfig = config_path => {
+        var loadTextures = textures => {
+            var result = {};
+            for (var id in textures) {
+                var tex = loader_TEX.load(path + textures[id]);
+                tex.magFilter = THREE.NearestFilter;
+                tex.minFilter = THREE.LinearMipMapLinearFilter;
+                result[id] = tex;
+            }
+            return result;
+        };
+        var loadMaterials = (textures, materials) => {
+            var result = {};
+            for (let id in materials) {
+                let config = {
+                    side: THREE.DoubleSide,
+                    envMap: scene.background,
+                    name: id,
+                    metalness: 0,
+                    roughness: 1
+                };
+                let material = new THREE.MeshStandardMaterial(config);
+                let toParse = materials[id];
+                for (let index in toParse)
+                    switch (index) {
+                        case 'color':
+                            material.color.setHex(parseInt(toParse[index], 16));
+                            break;
+                        case 'emissive':
+                            material.emissive = parseInt(toParse[index], 16);
+                            break;
+                        case 'map':
+                            material.map = textures[toParse[index]];
+                            material.transparent = true;
+                            material.opacity = 1.0;
+                            material.alphaTest = 0.5;
+                            break;
+                        default:
+                            if (material.hasOwnProperty(index))
+                                material[index] = toParse[index];
+                            break;
+                    }
+                material.needsUpdate = true;
+                result[id] = material;
+            }
+            return result;
+        };
+    
+        var config = {};
+        getJSON(config_path, toParse => {
+            config.textures = loadTextures(toParse.textures);
+            config.materials = loadMaterials(config.textures, toParse.materials);
+            delete toParse.textures;
+            delete toParse.materials;
+            for (let index in toParse) 
+                config[index] = toParse[index];
+        });
+        return config;
+    }
+
+
+
     // initialize
     var result = {
         config: {},
@@ -52,58 +114,83 @@ function loadModel(path) {
             }
         },
 
-        initSectorsMiniMap: (obj) => {
-            function makeTextSprite( message, parameters ){
-                if ( parameters === undefined ) parameters = {};
-                var fontface = parameters.hasOwnProperty("fontface") ? 
-                    parameters["fontface"] : "Arial";
-                var fontsize = parameters.hasOwnProperty("fontsize") ? 
-                    parameters["fontsize"] : 40;
-                var borderThickness = parameters.hasOwnProperty("borderThickness") ? 
-                    parameters["borderThickness"] : 5;
         
-                var canvas = document.createElement('canvas');
-                var context = canvas.getContext('2d');
-                context.font = "Bold " + fontsize + "px " + fontface;
+        getLastSeatIndex: sector => {
+            return [100,100]; // [row, col]
+        },
 
-                // canvas.width = context.measureText( message ).width;
-                // canvas.height = fontsize * 1.5;
-        
-                // text color
-                context.fillStyle = "rgba(255, 0, 0, 1.0)";
-                context.fillText( message, borderThickness, fontsize + borderThickness);
-        
-                // canvas contents will be used for a texture
-                var texture = new THREE.Texture(canvas) 
-                texture.needsUpdate = true;
-                return texture;
-            }
+        calculateSectorSize: sector => {
+            var A = result.calculateSeatPosition(sector, 0,0, false);                         // 0,0 -- first index
+            var B = result.calculateSeatPosition(sector, ...result.getLastSeatIndex(sector), false); // getLastSeatIndex returns array[row,col]
+            A = new THREE.Vector3(...A.position);
+            B = new THREE.Vector3(...B.position);
+            A.lerp(B, 0.5);
+            return [A.x, A.z];
+        },
 
+        initSectorsMiniMap: (obj, seats) => {
             for (let i = obj.children.length - 1; i >= 0; i--)
                 obj.remove(obj.children[i]);
-            for (let index in result.config.seats) {
-                if (index == "default") continue;
-                let tex = makeTextSprite(index);
-                let sector = new THREE.Sprite(new THREE.SpriteMaterial({map: tex}));
-                sector.scale.set(tex.image.width, tex.image.height, 100);
-                let seat = result.config.seats[index];
-                if (seat.hasOwnProperty("rows"))
-                    seat = seat.rows[0];
-                sector.position.set(...(seat.origin || seat.position));//.map(x => x * 5), 1);
-                sector.callback = () => {
-                    console.log("clicked!", index);
-                    controls.changeView(index, 1, 1);
-                };
-                obj.add(sector);
+            // var merged_geometry = new THREE.Geometry();
+            for (let index in seats) {
+                if (index == "default" || index == seats["default"]) continue;
+
+                let text_geometry = new THREE.TextGeometry(index, {
+                    font: font,
+                    size: 3,
+                    height: 1,
+                    bevelEnabled: false
+                });
+				text_geometry.computeBoundingBox();
+                text_geometry.translate(-text_geometry.boundingBox.max.x / 2, -text_geometry.boundingBox.max.y / 2, 0);
+
+                let textMesh = new THREE.Mesh(new THREE.BufferGeometry().fromGeometry(text_geometry), font_material);
+                textMesh.rotation.x = -Math.PI / 2;
+                
+                if (seats[index].hasOwnProperty("sector_center"))
+                    position = seats[index].sector_center;
+                else
+                    position = result.calculateSectorSize(index);
+                console.log(index, position);
+                textMesh.position.set(position[0], 1, position[1]);
+                textMesh.position.y = 1;
+                obj.add(textMesh);
+                // text_geometry.translate(-position[0]/100, position[2]/100, 0);
+
+                // merged_geometry.merge(text_geometry);
             }
+            // var textMesh = new THREE.Mesh(new THREE.BufferGeometry().fromGeometry(merged_geometry), font_material);
+            // textMesh.position.set(0, 1, 0);
+            // textMesh.rotation.x = -Math.PI / 2;
+            // obj.add(textMesh);
         }
     };
 
 
+    var prepareMaterial = (material, config) => {
+        if (Array.isArray(material)) {
+            for (let index in material)
+                material[index] = prepareMaterial(material[index], config);
+        } else {
+            if (config.hasOwnProperty(material.name)) {
+                material = config[material.name];
+            }
+        }
+        return material;
+    };
+
+
     // Load config
-    getJSON(path +'config.json', config => result.config = config);
+    result.config = parseConfig(path +'config.json');
     // Load model
-    new THREE.ObjectLoader().load(path +'model.json', obj => {
+    loader_MESH.load(path +'model.fbx', obj => {
+        obj.traverse(child => {
+            if (child.isMesh) {
+                child.castShadow = true;
+                child.receiveShadow = true;
+                child.material = prepareMaterial(child.material, result.config.materials);
+            }
+        });
         result.object = obj;
         scene.add(result.object);
 
@@ -111,13 +198,6 @@ function loadModel(path) {
             fitCameraToObject(cameraTop, result.object);
             if (! controls.load())
                 controls.changeView(result.config.seats.default);
-        }
-
-        if (addSeatToCombobox) {
-            for(index in result.config.seats) {
-                if (index == "default") continue;
-                addSeatToCombobox(index);
-            }
         }
 
         // if (result.config.hasOwnProperty("test")) {
@@ -142,7 +222,10 @@ function loadModel(path) {
         //     }
         // }
 
-        result.initSectorsMiniMap(HUD.SectorsOverlay);
+        result.initSectorsMiniMap(HUD.SectorsOverlay, model.config.seats);
+
+        // Run main loop
+        update();
     });
     return result;
 }

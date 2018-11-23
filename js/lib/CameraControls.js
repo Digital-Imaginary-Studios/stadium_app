@@ -5,7 +5,7 @@ THREE.CameraControls = function(camera, domElement) {
 	// RECEIVING EVENTS FROM BROWSER
 	var onPointerLockChange = e => this.isLocked = (document.pointerLockElement === domElement);
 	this.eventListeners = {
-		// MOUSE CONTROLS
+		// MOUSE INPUT
 		mousewheel: [domElement, e => {
 			if (this.canLock)
 				camera.translateZ(e.deltaY * this.zoomSpeed)
@@ -20,8 +20,8 @@ THREE.CameraControls = function(camera, domElement) {
 		}],
 		mousemove: [document, e => {
 			if (this.isLocked === false) return;
-			var movementX = event.movementX || event.mozMovementX || event.webkitMovementX || 0;
-			var movementY = event.movementY || event.mozMovementY || event.webkitMovementY || 0;
+			var movementX = e.movementX || e.mozMovementX || e.webkitMovementX || 0;
+			var movementY = e.movementY || e.mozMovementY || e.webkitMovementY || 0;
 			switch (this.button) {
 				case 0:
 					camera.rotateY(-movementX * this.lookSpeed);
@@ -44,7 +44,7 @@ THREE.CameraControls = function(camera, domElement) {
 			this.keys = [];
 		}],
 		
-		// KEYBOARD CONTROLS
+		// KEYBOARD INPUT
 		keyup: [document, e => this.keys[e.key.toLowerCase()] = false],
 		keydown: [document, e => this.keys[e.key.toLowerCase()] = true],
 		
@@ -115,6 +115,7 @@ THREE.CameraControls = function(camera, domElement) {
 	};
 
 	var lastPos;
+	// this.hasTouchInput = 'ontouchstart' in domElement;
 	this.canLock = true;
 	this.isLocked = false;
 	this.button = -1;

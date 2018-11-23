@@ -1,7 +1,9 @@
 THREE.HUD = function(config) {
     this.render = renderer => {
-        renderer.clearDepth();
-        renderer.render(this.SectorsOverlay, this.camera);
+        if (HUD.chooseSectorMode) {
+            renderer.clearDepth();
+            renderer.render(this.SectorsOverlay, cameraTop);
+        }
         renderer.clearDepth();
         renderer.render(this.scene, this.camera);
     };
@@ -37,7 +39,7 @@ THREE.HUD = function(config) {
     };
 
     this.addButton = (ID, texture, X, Y, CX, CY, callback) => {
-        loader_TEX.load(texture, tex => {
+        var createButton = (ID, tex, X, Y, CX, CY, callback) => {
             let button = new THREE.Sprite(new THREE.SpriteMaterial({map: tex}));
             button.scale.set(tex.image.width, tex.image.height, 1);
             button.center.set(CX, CY);
@@ -47,7 +49,12 @@ THREE.HUD = function(config) {
             button.callback = () => callback(button);
             this.sprites.push(button);
             this.scene.add(button);
-        });
+        };
+        if (texture instanceof THREE.Texture) {
+            createButton(ID, texture, X, Y, CX, CY, callback);
+        } else {
+            loader_TEX.load(texture, tex => createButton(ID, tex, X, Y, CX, CY, callback));
+        }
     };
     this.addElem = elem => {
         this.scene.add(elem);
@@ -69,9 +76,9 @@ THREE.HUD = function(config) {
     this.raycaster = new THREE.Raycaster();
     this.scene = new THREE.Scene();
     this.SectorsOverlay = new THREE.Scene();
-    this.SectorsOverlay.visible = false;
     this.camera = new THREE.OrthographicCamera(-viewport_width/2, viewport_width/2, viewport_height/2, -viewport_height/2, 1, 10);
     this.camera.position.z = 10;
+    this.chooseSectorMode = true;
 };
 
 THREE.HUD.prototype = Object.create( THREE.EventDispatcher.prototype );
