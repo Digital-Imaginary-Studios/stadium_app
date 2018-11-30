@@ -14,10 +14,11 @@
         "halogen_bulb":       { "color": "ffffff", "emissive": "ffffff" },
         "roof_top":           { "color": "afa162", "metalness": 1, "roughness": 0.3 },
         "roof_metal_crate":   { "color": "989292", "roughness": 0, "metalness": 1 },
-        "soccers_entry_roof": { "color": "255fbc", "metalness": 1, "roughness": 0.2 },
-        "Stadium":            { "map":"1", "metalness": 0.5, "roughness": 0.5 },
-        "tribune_chairs":     { "map":"1", "metalness": 0.5, "roughness": 0.7 },
-        "tribune_stairs":     { "color": "85602d", "roughness": 0.6, "metalness": 0.5 }
+        "soccers_entry_roof": { "color": "255fbc", "metalness": 0.6, "roughness": 0.7 },
+        "Stadium":            { "map":"1", "metalness": 0.5, "roughness": 0.5, "transparent": true },
+        "tribune_chairs":     { "map":"1", "metalness": 0.5, "roughness": 0.7, "transparent": true },
+        "tribune_stairs":     { "color": "85602d", "roughness": 0.6, "metalness": 0.5 },
+	    "Light_Box":          { "color": "e6ffff", "roughness": 0.3, "metalness": 0.4 }
     },
     "camera_offset": [0, 0.4, 0],
     "top_view": 27,
@@ -31,7 +32,12 @@
 	    "A-1": {
             "origin": [57.8, 1.05, 43.76],
             "offset": [-0.67, 0.5, 0.75],
-            "sector_center": [51.43, 57.63],
+            "bounds": [
+                [58.14, -43.56],
+                [58.14, -71.85],
+                [44.73, -71.85],
+                [44.73, -43.56]
+            ],
             "max": {
                 "cols": 20,
                 "rows": 38
@@ -40,7 +46,6 @@
 	    "A-2": {
             "origin": [42.34, 1.05, 43.76],
             "offset": [-0.66, 0.5, 0.75],
-            "sector_center": [36.4, 57.63],
             "max": {
                 "cols": 19,
                 "rows": 38
@@ -49,7 +54,6 @@
         "A-3": {
             "origin": [27.83, 1.05, 43.76],
             "offset": [-0.662, 0.5, 0.75],
-            "sector_center": [21.87, 57.63],
             "max": {
                 "cols": 19,
                 "rows": 38
@@ -57,7 +61,6 @@
         },
 	    "A-4": {
             "max": 2,
-            "sector_center": [7.2, 57.63],
             "rows": [
                 {
                     "origin": [6.63, 1.05, 43.76],
@@ -79,7 +82,6 @@
 	    "A-5": {
             "origin": [-1.31, 1.05, 43.76],
             "offset": [-0.66, 0.5, 0.75],
-            "sector_center": [-7.25, 57.63],
             "max": {
                 "cols": 19,
                 "rows": 38
@@ -88,7 +90,6 @@
 	    "A-6": {
             "origin": [-15.86, 1.05, 43.76],
             "offset": [-0.66, 0.5, 0.75],
-            "sector_center": [-21.8, 57.63],
             "max": {
                 "cols": 19,
                 "rows": 38
@@ -97,7 +98,6 @@
 	    "A-7": {
             "origin": [-30.41, 1.05, 43.76],
             "offset": [-0.66, 0.5, 0.75],
-            "sector_center": [-36.5, 57.63],
             "max": {
                 "cols": 19,
                 "rows": 38
@@ -106,7 +106,6 @@
         "A-8": {
             "origin": [-44.96, 1.05, 43.76],
             "offset": [-0.655, 0.5, 0.75],
-            "sector_center": [-50.52, 57.63],
             "max": {
                 "cols": 18,
                 "rows": 38
@@ -115,7 +114,6 @@
 
         "B-1": {
             "max": 37,
-            "sector_center": [-70, 54],
             "rows" : [
                 {
                     "origin": [-61.53, 1.08, 43.69],
@@ -804,7 +802,6 @@
         },
         "D-2": {
             "max": 37,
-            "sector_center": [-70, -61],
             "rows" : [
                 {
                     "origin": [-63.90, 1.05, -48.00],
@@ -1194,7 +1191,6 @@
 
         "F-1": {
             "max": 37,
-            "sector_center": [71.5, -61],
             "rows" : [
                 {
                     "origin": [63.22, 1.06, -49.49],
@@ -1883,7 +1879,6 @@
         },
         "H-2": {
             "max": 37,
-            "sector_center": [71.5, 54],
             "rows" : [
                 {
                     "origin": [65.63, 1.06, 42.11],

@@ -8,9 +8,9 @@ THREE.CameraControls = function(camera, domElement) {
 		// MOUSE INPUT
 		mousewheel: [domElement, e => {
 			if (this.canLock)
-				camera.translateZ(e.deltaY * this.zoomSpeed)
-			else
-				cameraTop.translateZ(e.deltaY * this.zoomSpeed)
+				camera.translateZ(e.deltaY * this.zoomSpeed);
+			// else
+			// 	HUD.camera.rotateX(e.deltaY * this.zoomSpeed);
 		}],
 		mousedown: [domElement, e => {
 			this.button = e.button;
