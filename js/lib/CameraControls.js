@@ -7,11 +7,13 @@ THREE.CameraControls = function(camera, domElement) {
 	this.eventListeners = {
 		// MOUSE INPUT
 		mousewheel: [domElement, e => {
+			if (e.detail)
+				e.deltaY = (e.detail * 100) / 3;
 			if (this.canLock)
 				camera.translateZ(e.deltaY * this.zoomSpeed);
 			// else
 			// 	HUD.camera.rotateX(e.deltaY * this.zoomSpeed);
-		}],
+		}, "DOMMouseScroll"], // Firefox compatibility
 		mousedown: [domElement, e => {
 			this.button = e.button;
 			if (! this.canLock) return;
@@ -55,10 +57,18 @@ THREE.CameraControls = function(camera, domElement) {
     // CONNECT EVENT LISTENERS
 	this.dispose = () => {
 		for (let event in this.eventListeners)
-			(() => { this.eventListeners[event][0].removeEventListener(event, this.eventListeners[event][1], false); })();
+			(() => {
+				this.eventListeners[event][0].removeEventListener(event, this.eventListeners[event][1], false);
+				if (this.eventListeners[event][2])
+					this.eventListeners[event][0].removeEventListener(this.eventListeners[event][2], this.eventListeners[event][1], false);
+			})();
 	};
 	for (let event in this.eventListeners)
-		(() => { this.eventListeners[event][0].addEventListener(event, this.eventListeners[event][1], false); })(); // closure needed, so the scope is properly assigned
+		(() => {
+			this.eventListeners[event][0].addEventListener(event, this.eventListeners[event][1], false);
+			if (this.eventListeners[event][2])
+				this.eventListeners[event][0].addEventListener(this.eventListeners[event][2], this.eventListeners[event][1], false);
+		})(); // closure needed, so the scope is properly assigned
 	
 	this.update = () => {
 		if (this.isLocked === false) return;
@@ -112,6 +122,7 @@ THREE.CameraControls = function(camera, domElement) {
 		var config = model.calculateSeatPosition(sector,row,col,true);
 		camera.position.set(...config.position);
 		camera.rotation.set(...config.rotation);
+		model.resetMaterials();
 	};
 
 	var lastPos;
@@ -120,9 +131,9 @@ THREE.CameraControls = function(camera, domElement) {
 	this.isLocked = false;
 	this.button = -1;
 	this.keys = [];
-	this.moveSpeed = 0.1;
+	this.moveSpeed = 0.05;
 	this.zoomSpeed = 0.1;
-	this.lookSpeed = 0.002;
+	this.lookSpeed = 0.001;
 	camera.rotation.set(0, 0, 0);
 	camera.rotation.order = "YXZ";
 };

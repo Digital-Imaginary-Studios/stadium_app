@@ -11,7 +11,6 @@ function loadModel(path) {
                 let tex = loader_TEX.load(path + textures[id], (tex) => {
                     tex.magFilter = THREE.NearestFilter;
                     tex.minFilter = THREE.LinearMipMapLinearFilter;
-                    console.log(tex);
                     Queue.finish(queueID);
                 });
                 result[id] = tex;
@@ -61,10 +60,27 @@ function loadModel(path) {
     
         var config = {};
         getJSON(config_path, toParse => {
-            config.textures = loadTextures(toParse.textures);
-            config.materials = loadMaterials(config.textures, toParse.materials);
-            delete toParse.textures;
-            delete toParse.materials;
+            if (toParse.textures) {
+                config.textures = loadTextures(toParse.textures);
+                delete toParse.textures;
+            }
+            if (toParse.materials) {
+                config.materials = loadMaterials(config.textures, toParse.materials);
+                delete toParse.materials;
+            }
+            if (toParse.materials_topview) {
+                config.materials_topview = loadMaterials(config.textures, toParse.materials_topview);
+                delete toParse.materials_topview;
+            }
+            if (toParse.sun) {
+                toParse.sun.color = parseInt(toParse.sun.color, 16) || 0xffffff;
+                config.sun = new THREE.DirectionalLight(toParse.sun.color, (toParse.sun.intensity || 1));
+                if (toParse.sun.position)
+                    config.sun.position.set(...toParse.sun.position);
+                if (toParse.sun.target)
+                    config.sun.lookAt(...toParse.sun.target);
+                delete toParse.sun;
+            }
             for (let index in toParse) 
                 config[index] = toParse[index];
         });
@@ -121,6 +137,20 @@ function loadModel(path) {
                 rotation: O3D.rotation.toArray().slice(0,3)
             }
         },
+        applyTopViewMaterials: () => {
+            result.object.traverse(child => {
+                if (child.isMesh) {
+                    child.material = applyMaterial(child.material, result.config.materials_topview);
+                }
+            });
+        },
+        resetMaterials: () => {
+            result.object.traverse(child => {
+                if (child.isMesh) {
+                    child.material = applyMaterial(child.material, result.config.materials);
+                }
+            });
+        },
         getSeatAt: (index, x, y) => {
             if (!result.config.seats.hasOwnProperty(index)) return false;
             var seat = result.config.seats[index];
@@ -134,37 +164,40 @@ function loadModel(path) {
                 x -= Math.abs(seat.offset[0] / 2);
                 x = Math.abs(Math.ceil(x / seat.offset[0]));
             } else {
+                
             }
             return [y, x]; // [row, col]
         }
     };
 
 
+    var applyMaterial = (material, config) => {
+        if (Array.isArray(material)) {
+            for (let index in material)
+                material[index] = applyMaterial(material[index], config);
+        } else {
+            if (config.hasOwnProperty(material.name)) {
+                material = config[material.name];
+            }
+        }
+        return material;
+    };
     // Load config
     result.config = parseConfig(path +'config.json');
     // Load model
     var queueID = Queue.new();
     loader_MESH.load(path +'model.fbx', obj => {
-        var prepareMaterial = (material, config) => {
-            if (Array.isArray(material)) {
-                for (let index in material)
-                    material[index] = prepareMaterial(material[index], config);
-            } else {
-                if (config.hasOwnProperty(material.name)) {
-                    material = config[material.name];
-                }
-            }
-            return material;
-        };
-
         obj.traverse(child => {
             if (child.isMesh) {
                 child.castShadow = true;
                 child.receiveShadow = true;
-                child.material = prepareMaterial(child.material, result.config.materials);
             }
         });
         result.object = obj;
+        result.resetMaterials();
+
+        if (result.config.sun) // spawnsun
+            obj.add(result.config.sun);
         scene.add(result.object);
 
         if (controls) {
@@ -172,8 +205,6 @@ function loadModel(path) {
             if (! controls.load())
                 controls.changeView(result.config.seats.default);
         }
-        HUD && HUD.fitToObject(result.object);
-        HUD && HUD.initSectorsOverlay(result.config.seats, 1000);
 
         Queue.finish(queueID);
     });

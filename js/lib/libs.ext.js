@@ -90,9 +90,10 @@ function getObjectCenterAndSize(object) {
 
 
 // THREE.JS EXTENSIONS
-THREE.loadSkybox = (scene, path) => {
+THREE.loadSkybox = (scene, path, ext) => {
+    ext = ext || "jpg";
     var queueID = Queue.new();
-    scene.background = new THREE.CubeTextureLoader().setPath(path).load(["px.jpg", "nx.jpg", "py.jpg", "ny.jpg", "pz.jpg", "nz.jpg"], () => Queue.finish(queueID));
+    scene.background = new THREE.CubeTextureLoader().setPath(path).load(["px."+ext, "nx."+ext, "py."+ext, "ny."+ext, "pz."+ext, "nz."+ext], () => Queue.finish(queueID));
     scene.background.format = THREE.RGBFormat;
 };
 
@@ -115,7 +116,7 @@ THREE.OrthographicCamera.prototype.fitToCenterAndSize = function (center, size, 
         this.top = -z;
         this.bottom = z;
         
-        this.position.set(center.x, (model.config.top_view || 1), center.z);
+        this.position.set(center.x, (model.config.topview_camera_position || 1), center.z);
         this.updateProjectionMatrix();
         this.rotation.y = this.rotation.z = 0;
         this.rotation.x = -Math.PI / 2;

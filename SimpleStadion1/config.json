@@ -1,7 +1,7 @@
 {
     "textures": {
-        "1": "maps/Stadium.png",
-	    "2": "maps/soccer_court_v03.jpg"
+        "1": "maps/Stadium2.png",
+	    "2": "maps/soccer_court_v04.jpg"
     },
     "materials": {
         "football_gate":      {
@@ -12,16 +12,25 @@
         "playing_field":      { "map": "2", "metalness": 0.1, "roughness": 0.8  },
         "halogen_light":      { "color": "e7e7e7", "metalness": 1, "roughness": 0.3  },
         "halogen_bulb":       { "color": "ffffff", "emissive": "ffffff" },
-        "roof_top":           { "color": "afa162", "metalness": 1, "roughness": 0.3 },
+        "roof_top":           { "color": "7a7a7a", "metalness": 1, "roughness": 0.3 },
         "roof_metal_crate":   { "color": "989292", "roughness": 0, "metalness": 1 },
-        "soccers_entry_roof": { "color": "255fbc", "metalness": 0.6, "roughness": 0.7 },
-        "Stadium":            { "map":"1", "metalness": 0.5, "roughness": 0.5, "transparent": true },
+        "soccers_entry_roof": { "color": "3871AB", "metalness": 0.6, "roughness": 0.7 },
+        "Stadium":            { "map":"1", "metalness": 0.1, "roughness": 0.8, "transparent": true },
         "tribune_chairs":     { "map":"1", "metalness": 0.5, "roughness": 0.7, "transparent": true },
-        "tribune_stairs":     { "color": "85602d", "roughness": 0.6, "metalness": 0.5 },
+        "tribune_stairs":     { "color": "655f5f", "roughness": 0.8, "metalness": 0.2 },
 	    "Light_Box":          { "color": "e6ffff", "roughness": 0.3, "metalness": 0.4 }
     },
+    "materials_topview": {
+        "tribune_chairs":     { "color": "0040aa" }
+    },
     "camera_offset": [0, 0.4, 0],
-    "top_view": 27,
+    "sun": {
+        "color": "fddf81",
+        "intensity": 0.7,
+        "position": [-100, 25, -100],
+        "target": [58, 9, 54]
+    },
+    "topview_camera_position": 27,
     "seats": {
         "default": "startup",
         "startup": {

@@ -43,6 +43,7 @@ function update() {
     renderer3d.autoClear = true;
 };
 
+// var sun;
 function init() {
     // WebGL Renderer
     renderer3d = new THREE.WebGLRenderer({antialias: true, premultipliedAlpha: false});
@@ -61,11 +62,16 @@ function init() {
 
     // Initialize scene
     scene = new THREE.Scene();
-    THREE.loadSkybox( scene, "images/skybox/2/" );
+    THREE.loadSkybox( scene, "images/skybox/", "png" );
 
     // Setup scene light
     var light = new THREE.AmbientLight( 0xffffff );
     scene.add(light);
+    // sun = new THREE.DirectionalLight( 0xffffff );
+    // sun.add(new THREE.Mesh(
+    //     new THREE.BoxBufferGeometry( 1, 1, 1 ),
+    //     new THREE.MeshBasicMaterial( { color: 0xffff00 } )));
+    // scene.add(sun);
 
     // Initialize cameras
     camera = new THREE.PerspectiveCamera(60, viewport_width / viewport_height, 0.1, 10000);
@@ -92,8 +98,10 @@ function init() {
     // Add HUD buttons
     HUD.addButton("bChooseSector", "images/choose_sector.png", 2, 3, 0.0, 1.0, () => {
         if (HUD.currentMode > 0) {
+            model.resetMaterials();
             HUD.currentMode = 0;
         } else {
+            model.applyTopViewMaterials();
             cameraTop.fitToObject(scene);
             HUD.currentMode = HUD.modes.chooseSector;
         }
@@ -113,8 +121,11 @@ function init() {
 
     // Run main loop
     var runLoop = () => Queue.everythingLoaded()
-                        ? update()
-                        : setTimeout(runLoop, 1000);
+                        ? (() => {
+                            HUD && HUD.fitToObject(model.object);
+                            HUD && HUD.initSectorsOverlay(model.config.seats, 1000);
+                            update();
+                        })() : setTimeout(runLoop, 1000);
     runLoop();
 }
 
