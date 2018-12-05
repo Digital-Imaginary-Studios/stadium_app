@@ -1,4 +1,5 @@
-var renderer3d, FPS = 80;
+var renderer3d, composer, FPS = 80;
+var renderPassPersp, renderPassOrtho;
 var controls;
 var scene, camera, cameraTop, HUD, mouse;
 var loader_TEX, loader_MESH;
@@ -52,6 +53,10 @@ function init() {
     updateRendererSize();
     document.body.appendChild(renderer3d.domElement);
 
+    // composer = new THREE.EffectComposer(renderer3d);
+    // renderPassPersp = new THREE.renderPass(scene, camera);
+    // renderPassOrtho = new THREE.renderPass(scene, cameraTop);
+
     // Initialize helpers
     loader_TEX = new THREE.TextureLoader();
     loader_MESH = new THREE.FBXLoader();
@@ -96,7 +101,7 @@ function init() {
     controls = new THREE.CameraControls(camera, renderer3d.domElement);
 
     // Add HUD buttons
-    HUD.addButton("bChooseSector", "images/choose_sector.png", 2, 3, 0.0, 1.0, () => {
+    HUD.addButton("bChooseSector", "images/choose_sector_v02.png", 2, 3, 0.0, 1.0, () => {
         if (HUD.currentMode > 0) {
             model.resetMaterials();
             HUD.currentMode = 0;
@@ -109,7 +114,7 @@ function init() {
         HUD.scene.getObjectByName("bBack").visible = false;
     }, () => HUD.get("bChooseSector").resize(12) );
 
-    HUD.addButton("bBack", "images/back.png", 15, 3, 0.0, 1.0, (_this) => {
+    HUD.addButton("bBack", "images/back_v02.png", 15, 3, 0.0, 1.0, (_this) => {
         // cameraTop.animateToObject(scene);
         cameraTop.fitToObject(scene);
         _this.visible = false;
